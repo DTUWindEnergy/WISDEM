@@ -52,9 +52,9 @@ class lcoe_csm_assembly(Assembly):
     max_efficiency = Float(0.90, iotype='in', desc = 'maximum efficiency of rotor and drivetrain - at rated power', group='Plant_AEP') # TODO: should come from drivetrain
     # Extra TCC parameters
     blade_number = Int(3, iotype='in', desc = 'number of rotor blades', group='Turbine_Cost')
-    offshore = Bool(True, iotype='in', desc = 'boolean for offshore', group='Global')
+    offshore = Bool(False, iotype='in', desc = 'boolean for offshore', group='Global')
     advanced_blade = Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve', group='Turbine_Cost')
-    crane = Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower', group='Turbine_Cost')
+    crane = Bool(False, iotype='in', desc = 'boolean for presence of a service crane up tower', group='Turbine_Cost')
     advanced_bedplate = Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional', group='Turbine_Cost')
     advanced_tower = Bool(False, iotype='in', desc = 'advanced tower configuration', group='Turbine_Cost')
     # Extra Finance parameters
@@ -62,29 +62,29 @@ class lcoe_csm_assembly(Assembly):
     construction_finance_rate = Float(0.00, iotype='in', desc = 'construction financing rate applied to overnight capital costs', group='Plant_Finance')
     tax_rate = Float(0.4, iotype = 'in', desc = 'tax rate applied to operations', group='Plant_Finance')
     discount_rate = Float(0.07, iotype = 'in', desc = 'applicable project discount rate', group='Plant_Finance')
-    construction_time = Float(1.0, iotype = 'in', desc = 'number of years to complete project construction', group='Plant_Finance')
-    project_lifetime = Float(20.0, iotype = 'in', desc = 'project lifetime for LCOE calculation', group='Plant_Finance')
+    construction_time = Float(1.0, iotype = 'in', desc = 'Number of years to complete project construction', group='Plant_Finance')
+    project_lifetime = Float(20.0, iotype = 'in', desc = 'Project lifetime for LCOE calculation', group='Plant_Finance')
 
-    #Outputs
-    turbine_cost = Float(iotype='out', desc = 'A Wind Turbine Capital _cost')
-    bos_costs = Float(iotype='out', desc='A Wind Plant Balance of Station _cost Model')
+    #TCC outputs
+    turbine_mass = Float(0.0, units='kg', iotype='out', desc='Wind turbine mass')
+    turbine_cost = Float(iotype='out', desc = 'Total capital costs for a single turbine')
+    # OPEX and BOS
     avg_annual_opex = Float(iotype='out', desc='A Wind Plant Operations Expenditures Model')
-    net_aep = Float(iotype='out', desc='A Wind Plant Annual Energy Production Model', units='kW*h')
-    coe = Float(iotype='out', desc='Levelized cost of energy for the wind plant')
     opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
+    bos_costs = Float(iotype='out', desc='Wind Plant Balance of Station costs')
     bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
     #AEP outputs
-    rated_wind_speed = Float(11.506, units = 'm / s', iotype='out', desc='wind speed for rated power')
-    rated_rotor_speed = Float(12.126, units = 'rpm', iotype='out', desc = 'rotor speed at rated power')
-    rotor_thrust = Float(iotype='out', units='N', desc='maximum thrust from rotor')
-    rotor_torque = Float(iotype='out', units='N * m', desc = 'torque from rotor at rated power')
-    power_curve = Array(np.array([[4.0,80.0],[25.0, 5000.0]]), iotype='out', desc = 'power curve for a particular rotor')
-    #max_efficiency = Float(0.902, iotype='out', desc = 'maximum efficiency of rotor and drivetrain - at rated power')
+    net_aep = Float(iotype='out', desc='Wind Plant Annual Energy Production', units='kW*h')
     gross_aep = Float(0.0, iotype='out', desc='Gross Annual Energy Production before availability and loss impacts', unit='kWh')
-    #TCC outputs
-    turbine_mass = Float(0.0, units='kg', iotype='out', desc='turbine mass')
+    rated_wind_speed = Float(11.506, units = 'm / s', iotype='out', desc='Wind speed for rated power')
+    rated_rotor_speed = Float(12.126, units = 'rpm', iotype='out', desc = 'Rotor speed at rated power')
+    rotor_thrust = Float(iotype='out', units='N', desc='Maximum thrust from rotor')
+    rotor_torque = Float(iotype='out', units='N * m', desc = 'Torque from rotor at rated power')
+    power_curve = Array(np.array([[4.0,80.0],[25.0, 5000.0]]), iotype='out', desc = 'Power curve')
+    #max_efficiency = Float(0.902, iotype='out', desc = 'maximum efficiency of rotor and drivetrain - at rated power')
     #Finance outputs
-    lcoe = Float(iotype='out', desc='_cost of energy - unlevelized')
+    coe = Float(iotype='out', desc='Levelized cost of energy for the wind plant')
+    lcoe = Float(iotype='out', desc='Unlevelized cost of energy for the wind plant')
 
     def configure(self):
 
@@ -209,7 +209,7 @@ def example():
     lcoe.advanced_blade = True #Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve')
     lcoe.crane = True #Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower')
     lcoe.advanced_bedplate = 0 #Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional')
-    lcoe.advanced_tower = False #Bool(False, iotype='in', desc = 'advanced tower configuration')
+    lcoe.advanced_tower = True #Bool(False, iotype='in', desc = 'advanced tower configuration')
 
     # Extra Finance inputs
     lcoe.fixed_charge_rate = 0.12 #Float(0.12, iotype = 'in', desc = 'fixed charge rate for coe calculation')
@@ -220,7 +220,6 @@ def example():
     lcoe.project_lifetime = 20.0 #Float(20.0, iotype = 'in', desc = 'project lifetime for LCOE calculation')
 
     lcoe.run()
-    return lcoe
     print "Cost of Energy results for a 500 MW offshore wind farm using the NREL 5 MW reference turbine"
     print "LCOE: ${0:.4f} USD/kWh".format(lcoe.lcoe)
     print "COE: ${0:.4f} USD/kWh".format(lcoe.coe)
@@ -229,6 +228,7 @@ def example():
     print "Turbine Cost: ${0:2f} USD".format(lcoe.turbine_cost)
     print "BOS costs per turbine: ${0:2f} USD/turbine".format(lcoe.bos_costs / lcoe.turbine_number)
     print "OPEX per turbine: ${0:2f} USD/turbine".format(lcoe.avg_annual_opex / lcoe.turbine_number)
+    return lcoe
 
     #from bokeh.plotting import figure
     #fig = figure()
