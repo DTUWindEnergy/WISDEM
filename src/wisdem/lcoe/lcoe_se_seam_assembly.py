@@ -40,8 +40,8 @@ def configure_lcoe_with_turb_costs(assembly):
 
     #assembly.replace('tcc_a', Turbine_CostsSE())
 
-    assembly.add('advanced_blade', Bool(True, iotype='in', desc='advanced (True) or traditional (False) blade design', group='Turbine_Cost'))
-    assembly.add('offshore', Bool(iotype='in', desc='flag for offshore site', group='Global'))
+    assembly.add('advanced_blade', Bool(False, iotype='in', desc='advanced (True) or traditional (False) blade design', group='Turbine_Cost'))
+    assembly.add('offshore', Bool(False, iotype='in', desc='flag for offshore site', group='Global'))
     assembly.add('assemblyCostMultiplier',Float(0.0, iotype='in', desc='multiplier for assembly cost in manufacturing', group='Turbine_Cost'))
     assembly.add('overheadCostMultiplier', Float(0.0, iotype='in', desc='multiplier for overhead', group='Turbine_Cost'))
     assembly.add('profitMultiplier', Float(0.0, iotype='in', desc='multiplier for profit markup', group='Turbine_Cost'))
@@ -248,11 +248,10 @@ class lcoe_se_seam_assembly(Assembly):
     turbine_number = Int(iotype = 'in', desc = 'number of turbines at plant', group='Global')
 
     #Outputs
-    turbine_cost = Float(iotype='out', desc = 'A Wind Turbine Capital _cost')
-    bos_costs = Float(iotype='out', desc='A Wind Plant Balance of Station _cost Model')
-    avg_annual_opex = Float(iotype='out', desc='A Wind Plant Operations Expenditures Model')
-    net_aep = Float(iotype='out', desc='A Wind Plant Annual Energy Production Model', units='kW*h')
-    coe = Float(iotype='out', desc='Levelized cost of energy for the wind plant')
+    turbine_cost = Float(iotype='out', desc = 'Total capital costs for a single turbine')
+    bos_costs = Float(iotype='out', desc='Wind Plant Balance of Station costs')
+    avg_annual_opex = Float(iotype='out', desc='Wind Plant Operations Expenditures costs')
+    net_aep = Float(iotype='out', desc='Wind Plant Annual Energy Production', units='kW*h')
     opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
     bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
 
@@ -261,7 +260,7 @@ class lcoe_se_seam_assembly(Assembly):
     with_landbose = Bool(False, iotype='in', desc='configure with CSM BOS if false, else configure with new LandBOS model')
     # flexible_blade = Bool(False, iotype='in', desc='configure rotor with flexible blade if True')
     with_3pt_drive = Bool(False, iotype='in', desc='only used if configuring DriveSE - selects 3 pt or 4 pt design option', group='Drivetrain') # TODO: change nacelle selection to enumerated rather than nested boolean
-    with_ecn_opex = Bool(False, iotype='in', desc='configure with CSM OPEX if flase, else configure with ECN OPEX model', group='Other')
+    with_ecn_opex = Bool(False, iotype='in', desc='configure with CSM OPEX if false, else configure with ECN OPEX model', group='Other')
     ecn_file = Str(iotype='in', desc='location of ecn excel file if used', group='Other')
 
     # Other I/O needed at lcoe system level
@@ -269,6 +268,9 @@ class lcoe_se_seam_assembly(Assembly):
     year = Int(2009, iotype='in', desc = 'year of project start', group='Plant_Finance')
     month = Int(12, iotype='in', desc = 'month of project start', group='Plant_Finance')
     project_lifetime = Float(20.0, iotype='in', desc = 'project lifetime for wind plant', group='Plant_Finance')
+    coe = Float(iotype='out', desc='Unlevelized cost of energy for the wind plant')
+    lcoe = Float(iotype='out', desc='Levelized cost of energy for the wind plant')
+
 
     def __init__(self, with_new_nacelle=False, with_landbos=False, flexible_blade=False, with_3pt_drive=False, with_ecn_opex=False, ecn_file=None):
 
@@ -339,6 +341,8 @@ class lcoe_se_seam_assembly(Assembly):
             self.replace('opex_a', opex_csm_assembly())
         self.replace('aep_a', aep_weibull_assembly())
         self.replace('fin_a', fin_csm_assembly())
+
+        self.connect('fin_a.lcoe', 'lcoe')
 
         # add TurbineSE assembly
         configure_turbine(self, self.with_new_nacelle, self.flexible_blade, self.with_3pt_drive)
@@ -504,7 +508,7 @@ def create_example_se_assembly(wind_class='I',sea_depth=0.0,with_new_nacelle=Fal
 
     # tcc ====
     lcoe_se.advanced_blade = True
-    lcoe_se.offshore = False
+    lcoe_se.offshore = True
     lcoe_se.assemblyCostMultiplier = 0.30
     lcoe_se.profitMultiplier = 0.20
     lcoe_se.overheadCostMultiplier = 0.0

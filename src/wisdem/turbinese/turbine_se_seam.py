@@ -84,8 +84,8 @@ def configure_turbine(assembly, with_new_nacelle=True, flexible_blade=False, wit
     assembly.add('PMtarget_tower', Float(1., iotype='in', desc='', group='Tower'))
     assembly.add('wohler_exponent_tower', Float(4., iotype='in', desc='Tower fatigue Wohler exponent', group='Tower'))
 
-    assembly.add('tower_z', Array(iotype='out', desc='Tower discretization'))
-    assembly.add('tower_wall_thickness', Array(iotype='out', units='m', desc='Tower wall thickness'))
+    # assembly.add('tower_z', Array(iotype='out', desc='Tower discretization'))
+    # assembly.add('tower_wall_thickness', Array(iotype='out', units='m', desc='Tower wall thickness'))
     assembly.add('tower_mass', Float(iotype='out', units='kg', desc='Tower mass'))
 
     assembly.add('tsr', Float(iotype='in', units='m', desc='Design tip speed ratio', group='Aero'))
@@ -140,9 +140,6 @@ def configure_turbine(assembly, with_new_nacelle=True, flexible_blade=False, wit
     assembly.add('ideal_power_curve', Array(iotype='out', units='kW', desc='total power before losses and turbulence'))
     assembly.add('power_curve', Array(iotype='out', units='kW', desc='total power including losses and turbulence'))
     assembly.add('wind_curve', Array(iotype='out', units='m/s', desc='wind curve associated with power curve'))
-
-    assembly.add('aep', Float(iotype = 'out', units='mW*h', desc='Annual energy production in mWh'))
-    assembly.add('total_aep', Float(iotype = 'out', units='mW*h', desc='AEP for total years of production'))
 
     # END SEAM Variables ----------------------
 
